@@ -34,13 +34,14 @@ const Reports = () => {
 
   useEffect(() => {
     fetchMonthlyData();
-    generateInsights();
-    generateAchievements();
-  }, [selectedPeriod, monthlyData]);
+  }, [selectedPeriod]);
 
   useEffect(() => {
-    fetchMonthlyData();
-  }, [selectedPeriod]);
+    if (monthlyData.length > 0) {
+      generateInsights();
+      generateAchievements();
+    }
+  }, [monthlyData]);
 
   const fetchMonthlyData = async () => {
     try {
@@ -59,15 +60,28 @@ const Reports = () => {
           }).then(response => ({
             month: format(date, 'MMM yyyy'),
             date: date,
+            totalIncome: 0,
+            totalExpenses: 0,
+            netAmount: 0,
             ...response.data
-          }))
+          })).catch(error => {
+            console.error(`Error fetching data for ${month}/${year}:`, error);
+            return {
+              month: format(date, 'MMM yyyy'),
+              date: date,
+              totalIncome: 0,
+              totalExpenses: 0,
+              netAmount: 0
+            };
+          })
         );
       }
       
       const results = await Promise.all(promises);
-      setMonthlyData(results);
+      setMonthlyData(results || []);
     } catch (error) {
       console.error('Error fetching monthly data:', error);
+      setMonthlyData([]);
     } finally {
       setLoading(false);
     }
@@ -124,24 +138,26 @@ const Reports = () => {
     const previous = monthlyData[monthlyData.length - 2] || {};
     
     // Spending trend insight
-    if (previous.totalExpenses && current.totalExpenses < previous.totalExpenses) {
+    if (previous.totalExpenses && current.totalExpenses && current.totalExpenses < previous.totalExpenses) {
+      const difference = previous.totalExpenses - current.totalExpenses;
       newInsights.push({
         id: 'spending_down',
         type: 'positive',
         title: 'Great Progress!',
-        message: `You've reduced spending by ${formatCurrency(previous.totalExpenses - current.totalExpenses)} this month.`,
+        message: `You've reduced spending by ${formatCurrency(difference, !balanceVisible)} this month.`,
         icon: TrendingDown,
         color: 'success'
       });
     }
     
     // Income growth insight
-    if (previous.totalIncome && current.totalIncome > previous.totalIncome) {
+    if (previous.totalIncome && current.totalIncome && current.totalIncome > previous.totalIncome) {
+      const difference = current.totalIncome - previous.totalIncome;
       newInsights.push({
         id: 'income_up',
         type: 'positive',
         title: 'Income Growth',
-        message: `Your income increased by ${formatCurrency(current.totalIncome - previous.totalIncome)} this month.`,
+        message: `Your income increased by ${formatCurrency(difference, !balanceVisible)} this month.`,
         icon: TrendingUp,
         color: 'success'
       });
@@ -205,22 +221,26 @@ const Reports = () => {
   const calculateTrends = () => {
     if (monthlyData.length < 2) return { income: 0, expenses: 0, savings: 0 };
     
-    const current = monthlyData[monthlyData.length - 1];
-    const previous = monthlyData[monthlyData.length - 2];
+    const current = monthlyData[monthlyData.length - 1] || {};
+    const previous = monthlyData[monthlyData.length - 2] || {};
     
-    const incomeTrend = previous.totalIncome > 0 
-      ? ((current.totalIncome - previous.totalIncome) / previous.totalIncome) * 100 
+    const incomeTrend = (previous.totalIncome || 0) > 0 
+      ? (((current.totalIncome || 0) - (previous.totalIncome || 0)) / (previous.totalIncome || 1)) * 100 
       : 0;
     
-    const expensesTrend = previous.totalExpenses > 0 
-      ? ((current.totalExpenses - previous.totalExpenses) / previous.totalExpenses) * 100 
+    const expensesTrend = (previous.totalExpenses || 0) > 0 
+      ? (((current.totalExpenses || 0) - (previous.totalExpenses || 0)) / (previous.totalExpenses || 1)) * 100 
       : 0;
     
-    const savingsTrend = previous.netAmount !== 0 
-      ? ((current.netAmount - previous.netAmount) / Math.abs(previous.netAmount)) * 100 
+    const savingsTrend = (previous.netAmount || 0) !== 0 
+      ? (((current.netAmount || 0) - (previous.netAmount || 0)) / Math.abs(previous.netAmount || 1)) * 100 
       : 0;
     
-    return { income: incomeTrend, expenses: expensesTrend, savings: savingsTrend };
+    return { 
+      income: isNaN(incomeTrend) ? 0 : incomeTrend, 
+      expenses: isNaN(expensesTrend) ? 0 : expensesTrend, 
+      savings: isNaN(savingsTrend) ? 0 : savingsTrend 
+    };
   };
 
   const trends = calculateTrends();

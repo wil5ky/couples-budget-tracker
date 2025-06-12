@@ -34,6 +34,10 @@ const MetricCard = ({
       iconBg: 'bg-neutral-100 dark:bg-neutral-700',
       iconColor: 'text-neutral-600 dark:text-neutral-300',
     },
+    primary: {
+      iconBg: 'bg-primary-100 dark:bg-primary-900/30',
+      iconColor: 'text-primary-600 dark:text-primary-400',
+    },
     success: {
       iconBg: 'bg-success-100 dark:bg-success-900/30',
       iconColor: 'text-success-600 dark:text-success-400',
@@ -56,7 +60,7 @@ const MetricCard = ({
     },
   };
 
-  const currentVariant = variants[variant];
+  const currentVariant = variants[variant] || variants.default;
 
   return (
     <Card 

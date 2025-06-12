@@ -54,6 +54,8 @@ const BudgetModal = ({ isOpen, onClose, budget, categories, monthYear, onSave })
       onClose();
     } catch (error) {
       console.error('Error saving budget:', error);
+      // You could add user-friendly error handling here
+      alert('Failed to save budget. Please try again.');
     }
   };
 
@@ -172,9 +174,10 @@ const Budget = () => {
   const fetchCategories = async () => {
     try {
       const response = await axios.get('/api/categories');
-      setCategories(response.data);
+      setCategories(response.data || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
+      setCategories([]);
     }
   };
 
@@ -184,9 +187,10 @@ const Budget = () => {
       const response = await axios.get('/api/budgets', {
         params: { month: currentMonth, year: currentYear }
       });
-      setBudgets(response.data);
+      setBudgets(response.data || []);
     } catch (error) {
       console.error('Error fetching budgets:', error);
+      setBudgets([]);
     } finally {
       setLoading(false);
     }
@@ -214,14 +218,19 @@ const Budget = () => {
   const generateAchievements = () => {
     const userAchievements = [];
     
+    if (!budgets || budgets.length === 0) {
+      setAchievements([]);
+      return;
+    }
+    
     // Calculate budget statistics
     const budgetsWithProgress = budgets.map(budget => ({
       ...budget,
-      percentage: budget.monthly_limit > 0 ? (budget.spent_amount / budget.monthly_limit) * 100 : 0
+      percentage: (budget?.monthly_limit || 0) > 0 ? ((budget?.spent_amount || 0) / (budget?.monthly_limit || 1)) * 100 : 0
     }));
     
-    const underBudgetCount = budgetsWithProgress.filter(b => b.percentage <= 100).length;
-    const wellManagedCount = budgetsWithProgress.filter(b => b.percentage <= 80).length;
+    const underBudgetCount = budgetsWithProgress.filter(b => (b?.percentage || 0) <= 100).length;
+    const wellManagedCount = budgetsWithProgress.filter(b => (b?.percentage || 0) <= 80).length;
     const totalBudgets = budgets.length;
     
     // Achievement: Budget Master
@@ -286,7 +295,7 @@ const Budget = () => {
   };
 
   const getBudgetHealthScore = () => {
-    if (budgets.length === 0) return 0;
+    if (!budgets || budgets.length === 0) return 0;
     
     let score = 0;
     const totalBudgets = budgets.length;
@@ -294,12 +303,12 @@ const Budget = () => {
     // Calculate category performance
     const budgetsWithProgress = budgets.map(budget => ({
       ...budget,
-      percentage: budget.monthly_limit > 0 ? (budget.spent_amount / budget.monthly_limit) * 100 : 0
+      percentage: (budget?.monthly_limit || 0) > 0 ? ((budget?.spent_amount || 0) / (budget?.monthly_limit || 1)) * 100 : 0
     }));
     
-    const underBudgetCount = budgetsWithProgress.filter(b => b.percentage <= 100).length;
-    const wellManagedCount = budgetsWithProgress.filter(b => b.percentage <= 80).length;
-    const veryWellManagedCount = budgetsWithProgress.filter(b => b.percentage <= 60).length;
+    const underBudgetCount = budgetsWithProgress.filter(b => (b?.percentage || 0) <= 100).length;
+    const wellManagedCount = budgetsWithProgress.filter(b => (b?.percentage || 0) <= 80).length;
+    const veryWellManagedCount = budgetsWithProgress.filter(b => (b?.percentage || 0) <= 60).length;
     
     // Score based on budget adherence
     score += (underBudgetCount / totalBudgets) * 40; // 40 points for staying under budget
@@ -318,8 +327,8 @@ const Budget = () => {
     return 'danger';
   };
 
-  const totalBudget = budgets.reduce((sum, budget) => sum + budget.monthly_limit, 0);
-  const totalSpent = budgets.reduce((sum, budget) => sum + budget.spent_amount, 0);
+  const totalBudget = budgets.reduce((sum, budget) => sum + (budget?.monthly_limit || 0), 0);
+  const totalSpent = budgets.reduce((sum, budget) => sum + (budget?.spent_amount || 0), 0);
   const totalRemaining = totalBudget - totalSpent;
   const overallProgress = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
   const healthScore = getBudgetHealthScore();
@@ -576,9 +585,9 @@ const Budget = () => {
         ) : (
           <div className="space-y-6">
             {budgets.map((budget) => {
-              const spentPercentage = budget.monthly_limit > 0 ? (budget.spent_amount / budget.monthly_limit) * 100 : 0;
+              const spentPercentage = (budget?.monthly_limit || 0) > 0 ? ((budget?.spent_amount || 0) / (budget?.monthly_limit || 1)) * 100 : 0;
               const alertLevel = getAlertLevel(spentPercentage);
-              const remaining = budget.monthly_limit - budget.spent_amount;
+              const remaining = (budget?.monthly_limit || 0) - (budget?.spent_amount || 0);
               
               return (
                 <div 

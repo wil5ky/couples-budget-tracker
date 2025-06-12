@@ -36,7 +36,7 @@ const Badge = ({
     <span
       className={`
         ${baseClasses}
-        ${variants[variant]}
+        ${variants[variant] || variants.default}
         ${sizes[size]}
         ${pulseClass}
         ${className}

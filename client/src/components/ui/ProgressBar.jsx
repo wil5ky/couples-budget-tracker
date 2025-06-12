@@ -26,6 +26,7 @@ const ProgressBar = ({
     danger: 'bg-gradient-to-r from-danger-400 to-danger-600',
     income: 'bg-gradient-to-r from-green-400 to-green-600',
     expense: 'bg-gradient-to-r from-amber-400 to-amber-600',
+    default: 'bg-gradient-to-r from-neutral-400 to-neutral-600',
   };
 
   const sizes = {
@@ -46,7 +47,7 @@ const ProgressBar = ({
     return 'success';
   };
 
-  const finalVariant = variant === 'smart' ? getSmartVariant() : variant;
+  const finalVariant = variant === 'smart' ? getSmartVariant() : (variants[variant] ? variant : 'default');
 
   return (
     <div className={`${className}`} {...props}>
