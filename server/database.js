@@ -3,7 +3,11 @@ const path = require('path');
 const fs = require('fs');
 
 // Create database directory if it doesn't exist
-const dbDir = path.join(__dirname, '../database');
+// Use /tmp for ephemeral storage, but add auto-recreation logic
+const dbDir = process.env.NODE_ENV === 'production' 
+  ? path.join(process.cwd(), 'data')
+  : path.join(__dirname, '../database');
+
 if (!fs.existsSync(dbDir)) {
   fs.mkdirSync(dbDir, { recursive: true });
 }
@@ -87,6 +91,23 @@ function initializeDatabase() {
       stmt.run(category.name, category.color, category.icon);
     });
     stmt.finalize();
+
+    // Check if we need to create sample users (for demo purposes)
+    if (process.env.NODE_ENV === 'production') {
+      createDemoUsersIfNeeded();
+    }
+  });
+}
+
+// Create demo users when database is fresh (for Render free tier)
+function createDemoUsersIfNeeded() {
+  db.get('SELECT COUNT(*) as count FROM users', (err, row) => {
+    if (!err && row.count === 0) {
+      console.log('Creating demo users for fresh database...');
+      // Import and create sample data
+      const { createSampleData } = require('./sample-data');
+      setTimeout(createSampleData, 1000); // Wait for tables to be ready
+    }
   });
 }
 
