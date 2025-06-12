@@ -1,0 +1,21 @@
+# GitHub Repository Setup Commands
+# Run these commands after creating your GitHub repository
+
+# 1. Add your GitHub repository as remote (replace YOUR_USERNAME with your GitHub username)
+cd "/Users/williamnamayi/Documents/VS Code Projects/New Project/budget-app"
+git remote add origin https://github.com/YOUR_USERNAME/couples-budget-tracker.git
+
+# 2. Set main as default branch
+git branch -M main
+
+# 3. Push to GitHub
+git push -u origin main
+
+# 4. Verify the push worked
+git remote -v
+
+# Example with a real username:
+# git remote add origin https://github.com/johndoe/couples-budget-tracker.git
+
+# After pushing, your repository will be available at:
+# https://github.com/YOUR_USERNAME/couples-budget-tracker
