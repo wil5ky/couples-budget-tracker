@@ -21,17 +21,21 @@ app.post('/api/register', async (req, res) => {
   try {
     const { username, password, displayName } = req.body;
     
+    console.log('Registration attempt:', { username, displayName });
+    
     if (!username || !password || !displayName) {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
     const user = await createUser(username, password, displayName);
+    console.log('User created successfully:', user.username);
     res.status(201).json({ message: 'User created successfully', user });
   } catch (error) {
+    console.error('Registration error:', error);
     if (error.code === 'SQLITE_CONSTRAINT') {
       res.status(400).json({ error: 'Username already exists' });
     } else {
-      res.status(500).json({ error: 'Server error' });
+      res.status(500).json({ error: 'Server error: ' + error.message });
     }
   }
 });
