@@ -4,6 +4,14 @@ const db = require('./database');
 
 const saltRounds = 10;
 
+// Ensure JWT_SECRET is available with fallback
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key-for-development-only-change-in-production';
+
+console.log('JWT_SECRET available:', !!process.env.JWT_SECRET);
+if (!process.env.JWT_SECRET) {
+  console.warn('Warning: Using fallback JWT_SECRET. Set JWT_SECRET environment variable in production.');
+}
+
 const authMiddleware = (req, res, next) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
   
@@ -12,7 +20,7 @@ const authMiddleware = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded;
     next();
   } catch (error) {
@@ -31,7 +39,7 @@ const comparePassword = async (password, hash) => {
 const generateToken = (user) => {
   return jwt.sign(
     { id: user.id, username: user.username },
-    process.env.JWT_SECRET,
+    JWT_SECRET,
     { expiresIn: '7d' }
   );
 };

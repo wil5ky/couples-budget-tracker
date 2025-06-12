@@ -9,4 +9,4 @@ services:
       - key: NODE_ENV
         value: production
       - key: JWT_SECRET
-        generateValue: true
+        value: render-super-secret-jwt-key-2024-couples-budget-tracker-production
