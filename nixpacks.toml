@@ -3,8 +3,8 @@ nixPkgs = ['nodejs', 'npm']
 
 [phases.install]
 cmds = [
-  'npm install --prefix server',
-  'npm install --prefix client'
+  'npm install --prefix server --production=false',
+  'npm install --prefix client --production=false'
 ]
 
 [phases.build]
@@ -13,4 +13,4 @@ cmds = [
 ]
 
 [start]
-cmd = 'cd server && npm start'
+cmd = 'cd server && NODE_ENV=production npm start'
