@@ -1,0 +1,33 @@
+{
+  "name": "couples-budget-tracker",
+  "version": "1.0.0",
+  "description": "A modern web application for couples to track their shared finances",
+  "private": true,
+  "scripts": {
+    "install-all": "npm install --prefix server && npm install --prefix client",
+    "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "build": "npm run build --prefix client",
+    "start": "cd server && npm start",
+    "sample-data": "npm run sample-data --prefix server",
+    "railway:build": "npm install --prefix server && npm install --prefix client && npm run build --prefix client",
+    "railway:start": "cd server && NODE_ENV=production npm start"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.1"
+  },
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "keywords": [
+    "budget",
+    "finance",
+    "tracker",
+    "couples",
+    "react",
+    "express",
+    "sqlite"
+  ],
+  "author": "Budget Tracker Team",
+  "license": "MIT"
+}
