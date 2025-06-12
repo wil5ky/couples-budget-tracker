@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { TrendingUp, TrendingDown, DollarSign, Target, Calendar, Users } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Target, Calendar, Users, Bot, Sparkles, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
+  const [aiInsights, setAiInsights] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
   useEffect(() => {
     fetchStats();
+    fetchAIInsights();
   }, [currentMonth, currentYear]);
 
   const fetchStats = async () => {
@@ -25,6 +27,17 @@ const Dashboard = () => {
       console.error('Error fetching stats:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAIInsights = async () => {
+    try {
+      const response = await axios.get('/api/ai/insights', {
+        params: { month: currentMonth, year: currentYear }
+      });
+      setAiInsights(response.data);
+    } catch (error) {
+      console.error('Error fetching AI insights:', error);
     }
   };
 
@@ -178,6 +191,66 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* AI Insights */}
+      {aiInsights && aiInsights.insights && aiInsights.insights.length > 0 && (
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 p-6 rounded-lg border border-purple-200 dark:border-purple-700">
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg text-white">
+              <Bot size={20} />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                <Sparkles size={16} className="mr-2" />
+                AI Insights
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Cleo's analysis of your spending</p>
+            </div>
+          </div>
+          
+          <div className="grid gap-3">
+            {aiInsights.insights.map((insight, index) => (
+              <div
+                key={index}
+                className={`flex items-start space-x-3 p-3 rounded-lg ${
+                  insight.severity === 'high' 
+                    ? 'bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800'
+                    : insight.severity === 'medium'
+                    ? 'bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800'
+                    : 'bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800'
+                }`}
+              >
+                <div className="flex-shrink-0 mt-0.5">
+                  {insight.severity === 'high' && <AlertTriangle size={16} className="text-red-600 dark:text-red-400" />}
+                  {insight.severity === 'medium' && <AlertTriangle size={16} className="text-yellow-600 dark:text-yellow-400" />}
+                  {insight.severity === 'low' && <Target size={16} className="text-green-600 dark:text-green-400" />}
+                </div>
+                <div className="flex-1">
+                  <p className={`text-sm font-medium ${
+                    insight.severity === 'high' 
+                      ? 'text-red-800 dark:text-red-200'
+                      : insight.severity === 'medium'
+                      ? 'text-yellow-800 dark:text-yellow-200'
+                      : 'text-green-800 dark:text-green-200'
+                  }`}>
+                    {insight.message}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <div className="mt-4 flex justify-center">
+            <button
+              onClick={() => window.location.href = '/ai-chat'}
+              className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-200 flex items-center space-x-2"
+            >
+              <Bot size={16} />
+              <span>Chat with Cleo</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

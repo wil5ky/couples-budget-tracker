@@ -4,9 +4,13 @@ const cors = require('cors');
 const path = require('path');
 const db = require('./database');
 const { authMiddleware, createUser, authenticateUser } = require('./auth');
+const { FinancialAI } = require('./ai-service');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Initialize AI assistant
+const ai = new FinancialAI();
 
 app.use(cors());
 app.use(express.json());
@@ -296,6 +300,207 @@ app.get('/api/export/csv', authMiddleware, (req, res) => {
     }
   });
 });
+
+// AI Assistant routes
+app.post('/api/ai/chat', authMiddleware, async (req, res) => {
+  try {
+    const { message } = req.body;
+    const userId = req.user.id;
+
+    if (!message) {
+      return res.status(400).json({ error: 'Message is required' });
+    }
+
+    // Get user's financial context for AI
+    const userContext = await getUserFinancialContext(userId);
+    
+    // Get AI response
+    const aiResponse = await ai.chat(message, userContext);
+    
+    res.json(aiResponse);
+  } catch (error) {
+    console.error('AI chat error:', error);
+    res.status(500).json({ error: 'AI service error' });
+  }
+});
+
+app.post('/api/ai/parse-transaction', authMiddleware, async (req, res) => {
+  try {
+    const { message } = req.body;
+    
+    if (!message) {
+      return res.status(400).json({ error: 'Message is required' });
+    }
+
+    const parsedTransaction = ai.parseTransaction(message);
+    
+    if (parsedTransaction) {
+      // Map category name to category ID
+      const categories = await new Promise((resolve, reject) => {
+        db.all('SELECT * FROM categories', (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        });
+      });
+
+      const category = categories.find(cat => 
+        cat.name.toLowerCase() === parsedTransaction.category?.toLowerCase()
+      );
+
+      if (category) {
+        parsedTransaction.category_id = category.id;
+      }
+
+      res.json(parsedTransaction);
+    } else {
+      res.json({ error: 'Could not parse transaction from message' });
+    }
+  } catch (error) {
+    console.error('Transaction parsing error:', error);
+    res.status(500).json({ error: 'Parsing service error' });
+  }
+});
+
+app.get('/api/ai/insights', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { month, year } = req.query;
+    
+    // Get user's transactions and budgets
+    const monthYear = month && year ? `${year}-${month.padStart(2, '0')}` : null;
+    
+    const transactions = await new Promise((resolve, reject) => {
+      let query = `
+        SELECT t.*, c.name as category_name, c.color as category_color
+        FROM transactions t
+        LEFT JOIN categories c ON t.category_id = c.id
+        WHERE t.user_id = ? OR t.user_id IN (SELECT id FROM users)
+      `;
+      const params = [];
+      
+      if (monthYear) {
+        query += ` AND strftime('%Y-%m', t.date) = ?`;
+        params.push(monthYear);
+      }
+      
+      query += ` ORDER BY t.date DESC`;
+      
+      db.all(query, params, (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows);
+      });
+    });
+
+    const budgets = await new Promise((resolve, reject) => {
+      let query = `
+        SELECT b.*, c.name as category_name
+        FROM budgets b
+        LEFT JOIN categories c ON b.category_id = c.id
+      `;
+      const params = [];
+      
+      if (monthYear) {
+        query += ` WHERE b.month_year = ?`;
+        params.push(monthYear);
+      }
+      
+      db.all(query, params, (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows);
+      });
+    });
+
+    const insights = ai.analyzeSpending(transactions, budgets);
+    res.json(insights);
+  } catch (error) {
+    console.error('AI insights error:', error);
+    res.status(500).json({ error: 'Insights service error' });
+  }
+});
+
+app.get('/api/ai/budget-recommendations', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const userContext = await getUserFinancialContext(userId);
+    
+    const recommendations = ai.generateBudgetRecommendations(
+      userContext.totalIncome,
+      userContext.categorySpending
+    );
+    
+    res.json(recommendations);
+  } catch (error) {
+    console.error('Budget recommendations error:', error);
+    res.status(500).json({ error: 'Recommendations service error' });
+  }
+});
+
+// Helper function to get user's financial context
+async function getUserFinancialContext(userId) {
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth() + 1;
+  const currentYear = currentDate.getFullYear();
+  const monthYear = `${currentYear}-${currentMonth.toString().padStart(2, '0')}`;
+
+  // Get current month's transactions
+  const transactions = await new Promise((resolve, reject) => {
+    db.all(`
+      SELECT t.*, c.name as category_name, c.color as category_color
+      FROM transactions t
+      LEFT JOIN categories c ON t.category_id = c.id
+      WHERE strftime('%Y-%m', t.date) = ?
+      ORDER BY t.date DESC
+    `, [monthYear], (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
+    });
+  });
+
+  // Get current month's budgets
+  const budgets = await new Promise((resolve, reject) => {
+    db.all(`
+      SELECT b.*, c.name as category_name
+      FROM budgets b
+      LEFT JOIN categories c ON b.category_id = c.id
+      WHERE b.month_year = ?
+    `, [monthYear], (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
+    });
+  });
+
+  // Calculate totals
+  const totalIncome = transactions
+    .filter(t => t.type === 'income')
+    .reduce((sum, t) => sum + t.amount, 0);
+    
+  const totalExpenses = transactions
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  // Get top categories
+  const categorySpending = {};
+  transactions.forEach(transaction => {
+    if (transaction.type === 'expense') {
+      const category = transaction.category_name || 'Uncategorized';
+      categorySpending[category] = (categorySpending[category] || 0) + transaction.amount;
+    }
+  });
+
+  const topCategories = Object.entries(categorySpending)
+    .sort(([,a], [,b]) => b - a)
+    .slice(0, 5)
+    .map(([category, amount]) => ({ category, amount }));
+
+  return {
+    totalIncome,
+    totalExpenses,
+    topCategories,
+    budgets,
+    recentTransactions: transactions.slice(0, 10),
+    categorySpending
+  };
+}
 
 // Catch-all handler for React Router in production
 if (process.env.NODE_ENV === 'production') {

@@ -11,7 +11,8 @@ import {
   Moon, 
   Sun,
   Menu,
-  X
+  X,
+  Bot
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -24,6 +25,7 @@ const Layout = ({ children }) => {
 
   const navigation = [
     { name: 'Dashboard', icon: Home, path: '/' },
+    { name: 'AI Assistant', icon: Bot, path: '/ai-chat' },
     { name: 'Transactions', icon: CreditCard, path: '/transactions' },
     { name: 'Budget', icon: Target, path: '/budget' },
     { name: 'Reports', icon: FileText, path: '/reports' },

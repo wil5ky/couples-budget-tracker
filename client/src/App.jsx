@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
+import AIChat from './components/AIChat';
 import Transactions from './components/Transactions';
 import Budget from './components/Budget';
 import Reports from './components/Reports';
@@ -38,6 +39,16 @@ const AppRoutes = () => {
           <ProtectedRoute>
             <Layout>
               <Dashboard />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ai-chat"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <AIChat />
             </Layout>
           </ProtectedRoute>
         }
