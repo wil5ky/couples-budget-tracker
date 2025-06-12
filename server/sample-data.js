@@ -7,8 +7,8 @@ async function createSampleData() {
   try {
     // Create sample users
     console.log('Creating sample users...');
-    const user1 = await createUser('alice', 'password123', 'Alice Smith');
-    const user2 = await createUser('bob', 'password123', 'Bob Smith');
+    const user1 = await createUser('willnamayi', 'password123', 'Will Namayi');
+    const user2 = await createUser('megnamayi', 'password123', 'Meg Namayi');
     
     console.log('Sample users created:', user1.username, 'and', user2.username);
 
@@ -41,7 +41,7 @@ async function createSampleData() {
         amount: 4500.00,
         description: 'Monthly Salary',
         date: `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`,
-        notes: 'Alice\'s monthly salary'
+        notes: 'Will\'s monthly salary'
       },
       {
         user_id: user2.id,
@@ -50,7 +50,7 @@ async function createSampleData() {
         amount: 3800.00,
         description: 'Monthly Salary',
         date: `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`,
-        notes: 'Bob\'s monthly salary'
+        notes: 'Meg\'s monthly salary'
       },
       
       // Expenses
@@ -177,8 +177,8 @@ async function createSampleData() {
 
     console.log('Sample data created successfully!');
     console.log('\nSample users:');
-    console.log('Username: alice, Password: password123, Display Name: Alice Smith');
-    console.log('Username: bob, Password: password123, Display Name: Bob Smith');
+    console.log('Username: willnamayi, Password: password123, Display Name: Will Namayi');
+    console.log('Username: megnamayi, Password: password123, Display Name: Meg Namayi');
     console.log('\nYou can now log in with either account to see the sample data.');
     
   } catch (error) {

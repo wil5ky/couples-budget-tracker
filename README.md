@@ -88,16 +88,16 @@ A modern, responsive web application for couples to track their shared finances.
 
 ### First Time Setup
 
-1. **Create User Accounts**
-   - Click "Sign up" on the login page
-   - Create accounts for both partners (e.g., "alice" and "bob")
-   - Both users will have access to shared financial data
+1. **Use Demo Accounts** (Easiest way to explore)
+   - **Username**: `willnamayi`, **Password**: `password123`
+   - **Username**: `megnamayi`, **Password**: `password123`
+   - Both accounts have shared financial data with sample transactions
 
-2. **Add Some Sample Data**
-   - Log in with either account
-   - Add a few income and expense transactions
+2. **Or Create Your Own Accounts**
+   - Click "Sign up" on the login page
+   - Create accounts for both partners
+   - Add your own income and expense transactions
    - Set budget limits for different categories
-   - Explore the dashboard and reports
 
 ## Database
 
