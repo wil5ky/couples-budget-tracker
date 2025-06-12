@@ -1,7 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Edit, AlertTriangle, TrendingUp, Target, Calendar } from 'lucide-react';
+import { 
+  Plus, 
+  Edit, 
+  AlertTriangle, 
+  TrendingUp, 
+  Target, 
+  Calendar, 
+  Award,
+  Shield,
+  Star,
+  Zap,
+  CheckCircle,
+  Eye,
+  EyeOff,
+  Sparkles,
+  TrendingDown
+} from 'lucide-react';
 import { format } from 'date-fns';
+import { Card, Button, Badge, ProgressBar, MetricCard } from './ui';
 
 const BudgetModal = ({ isOpen, onClose, budget, categories, monthYear, onSave }) => {
   const [formData, setFormData] = useState({
@@ -47,21 +64,31 @@ const BudgetModal = ({ isOpen, onClose, budget, categories, monthYear, onSave })
   );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-          {budget ? 'Edit Budget' : 'Set Budget'}
-        </h2>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+      <Card className="w-full max-w-md bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 shadow-hard">
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-xl">
+            <Target className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+          </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">
+              {budget ? 'Edit Budget' : 'Set Budget'}
+            </h2>
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">
+              {budget ? 'Update your spending limit' : 'Create a spending limit'}
+            </p>
+          </div>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-3">
               Category
             </label>
             <select
               value={formData.category_id}
               onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="w-full px-4 py-3 border border-neutral-300 dark:border-neutral-600 rounded-xl bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
               required
               disabled={!!budget}
             >
@@ -75,37 +102,45 @@ const BudgetModal = ({ isOpen, onClose, budget, categories, monthYear, onSave })
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-3">
               Monthly Budget Limit
             </label>
-            <input
-              type="number"
-              step="0.01"
-              value={formData.monthly_limit}
-              onChange={(e) => setFormData({ ...formData, monthly_limit: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              placeholder="0.00"
-              required
-            />
+            <div className="relative">
+              <input
+                type="number"
+                step="0.01"
+                value={formData.monthly_limit}
+                onChange={(e) => setFormData({ ...formData, monthly_limit: e.target.value })}
+                className="w-full px-4 py-3 pl-8 border border-neutral-300 dark:border-neutral-600 rounded-xl bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
+                placeholder="0.00"
+                required
+              />
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-500">$</span>
+            </div>
           </div>
 
-          <div className="flex space-x-3">
-            <button
+          <div className="flex space-x-3 pt-4">
+            <Button
               type="submit"
-              className="flex-1 bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 transition-colors"
+              variant="primary"
+              size="lg"
+              className="flex-1"
+              icon={budget ? <Edit size={18} /> : <Plus size={18} />}
             >
-              {budget ? 'Update' : 'Create'}
-            </button>
-            <button
+              {budget ? 'Update Budget' : 'Create Budget'}
+            </Button>
+            <Button
               type="button"
+              variant="secondary"
+              size="lg"
               onClick={onClose}
-              className="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 py-2 px-4 rounded-md hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
+              className="flex-1"
             >
               Cancel
-            </button>
+            </Button>
           </div>
         </form>
-      </div>
+      </Card>
     </div>
   );
 };
@@ -118,6 +153,8 @@ const Budget = () => {
   const [editingBudget, setEditingBudget] = useState(null);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [balanceVisible, setBalanceVisible] = useState(true);
+  const [achievements, setAchievements] = useState([]);
 
   const monthYear = `${currentYear}-${currentMonth.toString().padStart(2, '0')}`;
 
@@ -125,6 +162,12 @@ const Budget = () => {
     fetchCategories();
     fetchBudgets();
   }, [currentMonth, currentYear]);
+
+  useEffect(() => {
+    if (budgets.length > 0) {
+      generateAchievements();
+    }
+  }, [budgets]);
 
   const fetchCategories = async () => {
     try {
@@ -168,10 +211,67 @@ const Budget = () => {
     fetchBudgets();
   };
 
-  const formatCurrency = (amount) => new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD'
-  }).format(amount);
+  const generateAchievements = () => {
+    const userAchievements = [];
+    
+    // Calculate budget statistics
+    const budgetsWithProgress = budgets.map(budget => ({
+      ...budget,
+      percentage: budget.monthly_limit > 0 ? (budget.spent_amount / budget.monthly_limit) * 100 : 0
+    }));
+    
+    const underBudgetCount = budgetsWithProgress.filter(b => b.percentage <= 100).length;
+    const wellManagedCount = budgetsWithProgress.filter(b => b.percentage <= 80).length;
+    const totalBudgets = budgets.length;
+    
+    // Achievement: Budget Master
+    if (underBudgetCount === totalBudgets && totalBudgets > 0) {
+      userAchievements.push({
+        id: 'budget_master',
+        title: 'Budget Master!',
+        description: 'All categories within budget',
+        icon: '🎯',
+        color: 'success',
+        progress: 100
+      });
+    }
+    
+    // Achievement: Mindful Spender
+    if (wellManagedCount >= totalBudgets * 0.8 && totalBudgets > 0) {
+      userAchievements.push({
+        id: 'mindful_spender',
+        title: 'Mindful Spender',
+        description: 'Great spending discipline',
+        icon: '🧘',
+        color: 'primary',
+        progress: 100
+      });
+    }
+    
+    // Achievement: Budget Planner
+    if (totalBudgets >= 3) {
+      userAchievements.push({
+        id: 'budget_planner',
+        title: 'Budget Planner',
+        description: 'Multiple budgets set up',
+        icon: '📊',
+        color: 'warning',
+        progress: 100
+      });
+    }
+
+    setAchievements(userAchievements);
+  };
+
+  const formatCurrency = (amount, hideValue = false) => {
+    if (hideValue) return '••••••';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
 
   const getProgressColor = (percentage) => {
     if (percentage >= 100) return 'bg-red-500';
@@ -185,19 +285,71 @@ const Budget = () => {
     return 'success';
   };
 
+  const getBudgetHealthScore = () => {
+    if (budgets.length === 0) return 0;
+    
+    let score = 0;
+    const totalBudgets = budgets.length;
+    
+    // Calculate category performance
+    const budgetsWithProgress = budgets.map(budget => ({
+      ...budget,
+      percentage: budget.monthly_limit > 0 ? (budget.spent_amount / budget.monthly_limit) * 100 : 0
+    }));
+    
+    const underBudgetCount = budgetsWithProgress.filter(b => b.percentage <= 100).length;
+    const wellManagedCount = budgetsWithProgress.filter(b => b.percentage <= 80).length;
+    const veryWellManagedCount = budgetsWithProgress.filter(b => b.percentage <= 60).length;
+    
+    // Score based on budget adherence
+    score += (underBudgetCount / totalBudgets) * 40; // 40 points for staying under budget
+    score += (wellManagedCount / totalBudgets) * 30; // 30 points for staying well under budget
+    score += (veryWellManagedCount / totalBudgets) * 20; // 20 points for excellent management
+    
+    // Bonus for having multiple budgets set up
+    if (totalBudgets >= 3) score += 10;
+    
+    return Math.min(100, Math.round(score));
+  };
+
+  const getHealthColor = (score) => {
+    if (score >= 80) return 'success';
+    if (score >= 60) return 'warning';
+    return 'danger';
+  };
+
   const totalBudget = budgets.reduce((sum, budget) => sum + budget.monthly_limit, 0);
   const totalSpent = budgets.reduce((sum, budget) => sum + budget.spent_amount, 0);
   const totalRemaining = totalBudget - totalSpent;
   const overallProgress = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
+  const healthScore = getBudgetHealthScore();
+  const healthColor = getHealthColor(healthScore);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Budget Planning</h1>
+    <div className="space-y-8 animate-fade-in">
+      {/* Header with Balance Toggle */}
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold text-neutral-900 dark:text-neutral-100 mb-2">
+            Budget Planning
+          </h1>
+          <p className="text-neutral-600 dark:text-neutral-400">
+            {format(new Date(currentYear, currentMonth - 1), 'MMMM yyyy')} • Manage your spending limits
+          </p>
+        </div>
+        
         <div className="flex items-center space-x-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={balanceVisible ? <EyeOff size={16} /> : <Eye size={16} />}
+            onClick={() => setBalanceVisible(!balanceVisible)}
+          >
+            {balanceVisible ? 'Hide' : 'Show'} Amounts
+          </Button>
+          
           <div className="flex items-center space-x-2">
-            <Calendar size={20} className="text-gray-500" />
+            <Calendar size={20} className="text-neutral-500" />
             <select
               value={`${currentYear}-${currentMonth.toString().padStart(2, '0')}`}
               onChange={(e) => {
@@ -205,7 +357,7 @@ const Budget = () => {
                 setCurrentYear(parseInt(year));
                 setCurrentMonth(parseInt(month));
               }}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-xl bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
               {Array.from({ length: 12 }, (_, i) => {
                 const date = new Date(currentYear, i);
@@ -218,171 +370,297 @@ const Budget = () => {
               })}
             </select>
           </div>
-          <button
+          
+          <Button
+            variant="primary"
+            size="md"
+            icon={<Plus size={20} />}
             onClick={handleAdd}
-            className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors flex items-center space-x-2"
+            className="shadow-soft hover:shadow-medium"
           >
-            <Plus size={20} />
-            <span>Set Budget</span>
-          </button>
+            Set Budget
+          </Button>
         </div>
       </div>
 
-      {/* Overview Cards */}
+      {/* Budget Health Score */}
+      <Card className="bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 border-primary-200 dark:border-primary-700">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="p-4 bg-primary-500 rounded-2xl text-white">
+              <Shield size={32} />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-neutral-900 dark:text-neutral-100 mb-1">
+                Budget Health Score
+              </h3>
+              <p className="text-neutral-600 dark:text-neutral-400">
+                Based on your spending discipline and budget adherence
+              </p>
+            </div>
+          </div>
+          
+          <div className="text-right">
+            <div className="text-4xl font-bold text-primary-600 dark:text-primary-400 mb-2">
+              {healthScore}/100
+            </div>
+            <Badge variant={healthColor} size="lg">
+              {healthScore >= 80 ? 'Excellent' : healthScore >= 60 ? 'Good' : 'Needs Work'}
+            </Badge>
+          </div>
+        </div>
+        
+        <div className="mt-6">
+          <ProgressBar 
+            value={healthScore} 
+            max={100} 
+            variant={healthColor}
+            size="lg"
+            animated
+            glow
+            showValue
+          />
+        </div>
+      </Card>
+
+      {/* Key Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center">
-            <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-              <Target className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Budget</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {formatCurrency(totalBudget)}
-              </p>
-            </div>
-          </div>
-        </div>
+        <MetricCard
+          title="Total Budget"
+          value={balanceVisible ? totalBudget : '••••••'}
+          subtitle="Monthly allocation"
+          icon={Target}
+          variant="primary"
+          currency={balanceVisible}
+          large
+          className="hover:shadow-primary-glow"
+        />
 
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center">
-            <div className="p-2 bg-red-100 dark:bg-red-900 rounded-lg">
-              <TrendingUp className="w-6 h-6 text-red-600 dark:text-red-400" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Spent</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {formatCurrency(totalSpent)}
-              </p>
-            </div>
-          </div>
-        </div>
+        <MetricCard
+          title="Total Spent"
+          value={balanceVisible ? totalSpent : '••••••'}
+          subtitle="This month"
+          icon={TrendingDown}
+          variant="expense"
+          currency={balanceVisible}
+          large
+          trend="up"
+          trendValue={12.5}
+        />
 
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center">
-            <div className={`p-2 rounded-lg ${totalRemaining >= 0 ? 'bg-green-100 dark:bg-green-900' : 'bg-red-100 dark:bg-red-900'}`}>
-              <TrendingUp className={`w-6 h-6 ${totalRemaining >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`} />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Remaining</p>
-              <p className={`text-2xl font-bold ${totalRemaining >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                {formatCurrency(totalRemaining)}
-              </p>
-            </div>
-          </div>
-        </div>
+        <MetricCard
+          title="Remaining"
+          value={balanceVisible ? totalRemaining : '••••••'}
+          subtitle={totalRemaining >= 0 ? "Budget left" : "Over budget"}
+          icon={totalRemaining >= 0 ? TrendingUp : TrendingDown}
+          variant={totalRemaining >= 0 ? 'success' : 'danger'}
+          currency={balanceVisible}
+          large
+          className={totalRemaining >= 0 ? 'hover:shadow-success-glow' : 'hover:shadow-danger-glow'}
+        />
       </div>
+
+      {/* Achievements Section */}
+      {achievements.length > 0 && (
+        <Card className="bg-gradient-to-br from-warning-50 to-warning-100 dark:from-warning-900/20 dark:to-warning-800/20 border-warning-200 dark:border-warning-700">
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="p-2 bg-warning-500 rounded-xl text-white">
+              <Award size={24} />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+                Budget Achievements
+              </h3>
+              <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                You're building excellent financial habits!
+              </p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {achievements.map((achievement) => (
+              <div
+                key={achievement.id}
+                className="flex items-center space-x-3 p-4 bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:shadow-soft transition-all duration-200 hover:scale-[1.02]"
+              >
+                <div className="text-2xl">{achievement.icon}</div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-neutral-900 dark:text-neutral-100">
+                    {achievement.title}
+                  </h4>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                    {achievement.description}
+                  </p>
+                </div>
+                <Badge variant={achievement.color} size="sm">
+                  <Star size={12} className="mr-1" />
+                  Complete
+                </Badge>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* Overall Progress */}
       {totalBudget > 0 && (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Overall Budget Progress</h3>
-            <span className={`text-sm font-medium ${
-              overallProgress >= 100 ? 'text-red-600 dark:text-red-400' :
-              overallProgress >= 80 ? 'text-yellow-600 dark:text-yellow-400' :
-              'text-green-600 dark:text-green-400'
-            }`}>
-              {overallProgress.toFixed(1)}%
-            </span>
+        <Card>
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Overall Budget Progress</h3>
+              <p className="text-sm text-neutral-600 dark:text-neutral-400">Total spending across all categories</p>
+            </div>
+            <Badge 
+              variant={overallProgress >= 100 ? 'danger' : overallProgress >= 80 ? 'warning' : 'success'}
+              size="md"
+            >
+              {overallProgress.toFixed(1)}% Used
+            </Badge>
           </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4">
-            <div
-              className={`h-4 rounded-full transition-all duration-300 ${getProgressColor(overallProgress)}`}
-              style={{ width: `${Math.min(overallProgress, 100)}%` }}
-            ></div>
+          
+          <ProgressBar 
+            value={overallProgress} 
+            max={100} 
+            variant="smart"
+            size="lg"
+            animated
+            showValue
+          />
+          
+          <div className="flex justify-between text-sm text-neutral-500 dark:text-neutral-400 mt-3">
+            <span>{formatCurrency(totalSpent, !balanceVisible)} spent</span>
+            <span>{formatCurrency(totalBudget, !balanceVisible)} budgeted</span>
           </div>
-          <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400 mt-2">
-            <span>{formatCurrency(totalSpent)} spent</span>
-            <span>{formatCurrency(totalBudget)} budgeted</span>
-          </div>
-        </div>
+        </Card>
       )}
 
       {/* Budget Categories */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Category Budgets</h3>
+      <Card>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">Category Budgets</h3>
+            <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
+              Track spending limits for each category
+            </p>
+          </div>
+          <Badge variant="primary" size="md">
+            {budgets.length} Categories
+          </Badge>
         </div>
         
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          <div className="flex flex-col items-center justify-center py-16">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mb-4"></div>
+            <p className="text-neutral-600 dark:text-neutral-400">Loading budgets...</p>
           </div>
         ) : budgets.length === 0 ? (
-          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-            <Target size={48} className="mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-            <p>No budgets set for this month</p>
-            <button
+          <div className="text-center py-16">
+            <div className="p-6 bg-neutral-50 dark:bg-neutral-700/50 rounded-2xl inline-block mb-6">
+              <Target size={48} className="text-neutral-300 dark:text-neutral-600" />
+            </div>
+            <h4 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 mb-2">
+              No budgets set for this month
+            </h4>
+            <p className="text-neutral-600 dark:text-neutral-400 mb-6">
+              Start by setting spending limits for your categories
+            </p>
+            <Button
+              variant="primary"
+              size="lg"
+              icon={<Plus size={20} />}
               onClick={handleAdd}
-              className="mt-4 text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
             >
-              Set your first budget
-            </button>
+              Set Your First Budget
+            </Button>
           </div>
         ) : (
-          <div className="p-6 space-y-6">
+          <div className="space-y-6">
             {budgets.map((budget) => {
               const spentPercentage = budget.monthly_limit > 0 ? (budget.spent_amount / budget.monthly_limit) * 100 : 0;
               const alertLevel = getAlertLevel(spentPercentage);
               const remaining = budget.monthly_limit - budget.spent_amount;
               
               return (
-                <div key={budget.id} className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center space-x-3">
-                      <div
-                        className="w-4 h-4 rounded-full"
+                <div 
+                  key={budget.id} 
+                  className="group p-6 bg-neutral-50 dark:bg-neutral-700/50 rounded-2xl border border-neutral-200 dark:border-neutral-600 hover:shadow-soft transition-all duration-200 hover:scale-[1.01]"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center space-x-4">
+                      <div 
+                        className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold shadow-soft"
                         style={{ backgroundColor: budget.category_color }}
-                      ></div>
+                      >
+                        {budget.category_icon || budget.category_name?.[0] || 'B'}
+                      </div>
                       <div>
-                        <h4 className="font-medium text-gray-900 dark:text-white flex items-center">
-                          {budget.category_icon && <span className="mr-2">{budget.category_icon}</span>}
+                        <h4 className="font-semibold text-neutral-900 dark:text-neutral-100 text-lg">
                           {budget.category_name}
                         </h4>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {formatCurrency(budget.spent_amount)} of {formatCurrency(budget.monthly_limit)}
+                        <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                          {formatCurrency(budget.spent_amount, !balanceVisible)} of {formatCurrency(budget.monthly_limit, !balanceVisible)}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-4">
+                    
+                    <div className="flex items-center space-x-3">
                       {alertLevel === 'danger' && (
-                        <AlertTriangle size={20} className="text-red-500" />
+                        <div className="p-2 bg-danger-100 dark:bg-danger-900/30 rounded-lg">
+                          <AlertTriangle size={16} className="text-danger-600 dark:text-danger-400" />
+                        </div>
                       )}
                       {alertLevel === 'warning' && (
-                        <AlertTriangle size={20} className="text-yellow-500" />
+                        <div className="p-2 bg-warning-100 dark:bg-warning-900/30 rounded-lg">
+                          <AlertTriangle size={16} className="text-warning-600 dark:text-warning-400" />
+                        </div>
                       )}
-                      <span className={`text-sm font-medium ${
-                        remaining >= 0 ? 'text-gray-900 dark:text-white' : 'text-red-600 dark:text-red-400'
-                      }`}>
-                        {remaining >= 0 ? formatCurrency(remaining) : `Over by ${formatCurrency(Math.abs(remaining))}`}
-                      </span>
-                      <button
-                        onClick={() => handleEdit(budget)}
-                        className="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-200"
+                      
+                      <Badge 
+                        variant={remaining >= 0 ? 'success' : 'danger'} 
+                        size="md"
                       >
-                        <Edit size={16} />
-                      </button>
+                        {remaining >= 0 
+                          ? `${formatCurrency(remaining, !balanceVisible)} left` 
+                          : `Over by ${formatCurrency(Math.abs(remaining), !balanceVisible)}`
+                        }
+                      </Badge>
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        icon={<Edit size={16} />}
+                        onClick={() => handleEdit(budget)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        Edit
+                      </Button>
                     </div>
                   </div>
                   
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-                    <div
-                      className={`h-3 rounded-full transition-all duration-300 ${getProgressColor(spentPercentage)}`}
-                      style={{ width: `${Math.min(spentPercentage, 100)}%` }}
-                    ></div>
-                  </div>
-                  
-                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                    <span>{spentPercentage.toFixed(1)}% used</span>
-                    <span>{Math.max(0, 100 - spentPercentage).toFixed(1)}% remaining</span>
+                  <div className="space-y-3">
+                    <ProgressBar 
+                      value={spentPercentage} 
+                      max={100} 
+                      variant="smart"
+                      size="md"
+                      animated
+                    />
+                    
+                    <div className="flex justify-between text-sm">
+                      <span className="text-neutral-600 dark:text-neutral-400">
+                        {spentPercentage.toFixed(1)}% used
+                      </span>
+                      <span className="text-neutral-600 dark:text-neutral-400">
+                        {Math.max(0, 100 - spentPercentage).toFixed(1)}% remaining
+                      </span>
+                    </div>
                   </div>
                 </div>
               );
             })}
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Budget Modal */}
       <BudgetModal
